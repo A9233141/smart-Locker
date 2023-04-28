@@ -1,0 +1,226 @@
+<!DOCTYPE HTML><html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js" type="text/javascript"></script>
+  <script type="text/javascript" language="javascript">
+  ledSwitch = 0;
+function startConnect() {
+    clientID = "Web/nodemcu32s/IOT_" + parseInt(Math.random() * 100); //我的clientID再加上亂數
+    host = "mqttgo.io"; 
+    port = "8000";
+    client = new Paho.MQTT.Client(host, Number(port), clientID);
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+    client.connect({ 
+        onSuccess: onConnect,
+    });
+}
+function onConnect() {
+    console.log("Connected!");
+    document.getElementById("mqtt_status").innerHTML="MQTT Connected!";
+    document.getElementById("mqtt_status").style.color="green";
+
+    client.subscribe("YourEsp32/esp32s_temp"); //訂閱溫度
+    client.subscribe("YourEsp32/esp32s_humd"); //訂閱濕度
+    client.subscribe("YourEsp32/esp32s_HHX711");
+    pubTopic = new Paho.MQTT.Message("Online");
+    pubTopic.destinationName = "YourEsp32/esp32s_is_back"; //當我的ESP32再次上線時就會訂閱YourEsp32/esp32s_is_back
+  client.send(pubTopic);
+}
+function onConnectionLost(responseObject) {
+  document.getElementById("mqtt_status").innerHTML="MQTT Disconnected!";
+  document.getElementById("mqtt_status").style.color="red";
+    if (responseObject.errorCode !== 0) {
+        console.log("Connection lost!");
+    }
+}
+function publishMessage(action){
+  pubTopic = new Paho.MQTT.Message(action); 
+  pubTopic.destinationName = "YourEsp32/esp32s"; //我的動作向YourEsp32/esp32s發布訊息
+  client.send(pubTopic);
+}
+
+function onMessageArrived(message) {
+  console.log("Topic: " + message.destinationName);
+  if(message.destinationName=="YourEsp32/esp32s_temp"){
+    console.log("temp: " + message.payloadString);
+    document.getElementById("temperature").innerHTML = message.payloadString;
+  }
+  if(message.destinationName=="YourEsp32/esp32s_humd"){
+    console.log("humd: " + message.payloadString);
+    document.getElementById("humidity").innerHTML = message.payloadString;
+  }
+  if(message.destinationName=="YourEsp32/esp32s_HHX711"){
+    console.log("weightt: " + message.payloadString);
+    document.getElementById("Weight").innerHTML = message.payloadString;
+  }
+}
+function startDisconnect() {
+    client.disconnect();
+    console.log("Disconnected...");
+}
+function uBC(direction){
+            publishMessage(direction);
+}
+setInterval(function() {
+    var img = document.getElementById("myImage");
+    img.src = "http://192.168.0.136/?random=" + new Date().getTime();
+}, 24000); // 4 分鐘，以毫秒為單位
+  </script>
+  <meta name='viewport' content='width=device-width, initial-scale=1'>
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <style>
+    h2 {
+        font-size: 2.0rem;
+    }
+
+    h1 {
+        margin-left: 0px;
+        text-align: center;
+        font-size: 50px;
+        color: #000000;
+    }
+    
+    html {
+        height: 100%;
+     }
+
+    body {
+        background-image: url("https://storage.googleapis.com/statics-readr-tw-prod/images/ckvae1qx7000z0z0cg7y1aa11-w480.jpg");
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+    }
+
+    .sensor {
+        margin-bottom: 20px;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        background-color: rgba(255, 255, 255, 0.8);
+        
+    }
+
+    .container {
+        margin: 0 auto;
+        width: 1500px;
+        overflow: hidden;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .image-container {
+      float: left;
+      width: 50%;
+      top: 50px;
+      
+    }
+
+    .img{
+      margin-left: 125px;
+    }
+
+    .table-container {
+      float: right;
+      width: 50%;
+    }
+
+    /* Rectangle button */
+    .button {
+        display: inline-block;
+        width: 120px;
+        height: 40px;
+        background: #E03D3D;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 16px;
+        color: white;
+        border: unset;
+        margin: 0 20px;
+    }
+
+    .button:active {
+        background: #dd9595;
+        color: yellow;
+        font-size: 20px;
+    }
+
+    #nav {
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+    #mqtt_status {
+        
+        color: red;
+        font-weight: 600;
+        bottom: 608px;
+        position: absolute;
+    }
+
+    #LEDoff {
+        
+        position: static;
+      }
+
+    #LEDon {
+        
+        position: static;
+      }
+
+    #Relayoff {
+        
+        position: static;
+      }
+
+    #Relayon {
+        
+        position: static;
+      }  
+</style>
+    </head>
+        <h1>智慧防盜外賣箱</h1>
+    <body onload="startConnect();">
+    <div class="container">
+      <div class="table-container">
+      <div class="sensor">
+        <i class="fas fa-thermometer-half" style="color:#059e8a;"></i>  
+        <h2 class="temperature">溫度：<span id="temperature"></span>C</h2>
+      </div>
+      <div class="sensor">
+        <i class="fas fa-tint" style="color:#00add6;"></i>
+        <h2 class="humidity">濕度：<span id="humidity"></span></h2>
+      </div>
+      <div class="sensor">
+        <i class="fas fa-weight" style="color:#000000;"></i>
+        <h2 class="Weight">重量：<span id="Weight"></span></h2>
+      </div>
+      <div id="nav">
+        <button class="button" id="LEDoff" onclick="uBC('LEDoff');">LEDOFF</button>
+        <button class="button" id="LEDon" onclick="uBC('LEDon');">LEDON</button>
+        <button class="button" id="Relayff" onclick="uBC('Relayoff');">RelayOFF</button>
+        <button class="button" id="Relayon" onclick="uBC('Relayon');">RelayON</button>
+        <span id="mqtt_status">MQTT offline!</span>
+      </div>
+      
+      <div id="messages"></div>
+      </div>
+      <div class="image-container">
+
+        <img width='500' height='500' class="img" id="myImage" src='http://192.168.0.136/'/>
+      </div> 
+    </div>   
+    </body>
+    </html>
